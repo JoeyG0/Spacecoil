@@ -1,0 +1,63 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class gunRenderBehavior : MonoBehaviour {
+    public Vector2 mousePosition = new Vector2();
+    public Transform gun;
+    public Vector2 gunPosition = new Vector2();
+    public Vector2 mouseDir = new Vector2();
+    public GameObject player;
+    private Transform playerTransform;
+    private SpriteRenderer playerFlip;
+    private SpriteRenderer flipGun;
+    public float gunAngle;
+    Camera Cam;
+    Animator anim;
+    PlayerMove cl;
+    public bool boosting;
+
+
+    // Use this for initialization
+    void Start () {
+        cl = player.GetComponent<PlayerMove>();
+        anim = GetComponent<Animator>();
+        playerTransform = player.GetComponent<Transform>();
+        gun = GetComponent<Transform>();
+        playerFlip = player.GetComponent<SpriteRenderer>();
+        flipGun = GetComponent<SpriteRenderer>();
+        Cam = Camera.main;
+    }
+
+    public void shootAnimationController(bool gunMode, bool shooting) {
+        anim.SetBool("gunMode", gunMode);
+        anim.SetBool("shooting", shooting);
+
+    }
+
+
+    public void setGunDirection(bool boosting) {
+            anim.SetBool("boosting", boosting);
+        }
+
+        public void setGunDirection(float angle, bool boosting) {
+
+        anim.SetBool("boosting", boosting);
+
+        if (angle > 90) {
+
+            playerFlip.flipX = true;
+            flipGun.flipY = true;
+        }
+        else {
+
+            playerFlip.flipX = false;
+            flipGun.flipY = false;
+        }
+
+        transform.rotation = Quaternion.Euler(new Vector3(0, 0, angle));
+
+    }
+
+
+}

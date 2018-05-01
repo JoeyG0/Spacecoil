@@ -1,0 +1,387 @@
+
+public class PlayerMove : MonoBehaviour {
+    public float shake = 3f;
+    public float shakeTime = .2f;
+    CameraFollow camMove;
+    GameObject gun;
+    gunRenderBehavior gunRender;
+    public GameObject Gunbolt;
+    Grappling_hook gh;
+    float gAngle;
+    public int directionX = 0;
+    public float speedX = 0f;
+    public int directionY = 0;
+    public float speedY = 0f;
+	bool overheat = false;
+    public bool clicked = false;
+    public int shootCount = 0;
+    public float Force = 1200.0f;
+    public float maxSpeed = 50.0f;
+    public Rigidbody2D rb2D;
+    public Vector2 TestPosition;
+    public Vector2 playerPosition = new Vector2();
+    public bool boosting;
+    private GameObject button;
+    public float thrustForce = 50f;
+    public bool isGrounded = false;
+    Camera Cam;
+    public double threshhold = 200;
+    public float timeToClick = 450;
+    public int overheatLevel = 2;
+    public double heatLevel;
+    float wTimeHealdDown = 0;
+    float aTimeHealdDown = 0;
+    float sTimeHeldDown = 0; 
+    float dTimeHeldDown = 0;
+    public float boostThreshold = .13f;
+    public bool shooting;
+    public bool shootMode;
+
+
+    // Use this for initialization
+    void Start() {
+        gun = GameObject.Find("gunRender");
+        gunRender = gun.GetComponent<gunRenderBehavior>();
+        heatLevel = 1;
+        gh = GetComponent<Grappling_hook>();
+        rb2D = GetComponent<Rigidbody2D>();
+        Cam = Camera.main;
+        camMove = Cam.GetComponent<CameraFollow>();
+    }
+
+    // Update is called once per frame
+    void Update() {
+
+        //this indicates the player as stopped holding down space
+        if (Input.GetKeyUp(KeyCode.Space)){
+            shootMode = false;
+        }
+        gunRender.shootAnimationController(shootMode, shooting);
+        bool pauseState = GameObject.Find("Pause Menu").GetComponent<PauseMenu>().isPaused;
+       // gAngle = gunRender.gunAngle;
+        shootInputHandler(pauseState);
+        //Debug.Log(heatLevel);
+        //Debug.Log((int)(Force * (8 / heatLevel)));
+        //thrust(pauseState);
+    }
+
+    public void shootInputHandler(bool pause) {
+
+        //if the player is holding down the space button they have entered shoot mode
+        if (Input.GetKey(KeyCode.Space) && !pause) {
+            shootMode = true;
+            bool up = false;
+            bool down = false;
+            bool left = false;
+            bool right = false;
+            
+            float gunAngle;
+            //we see which keys the player presses to see which  direction the player wants to shoot in
+            // they alre seperate if statements so diaganals can work
+            //I can apply the force seperately because the shoot is a tap not a hold
+            if (Input.GetKeyDown(KeyCode.D)) {
+                shooting = true;
+                right = true;
+            }
+            else {
+                right = false;
+            }
+            if (Input.GetKeyDown(KeyCode.A)) {
+                shooting = true;
+                left = true;
+            }
+            else {
+                left = false;
+            }
+            if (Input.GetKeyDown(KeyCode.W)) {
+                up = true;
+                shooting = true;
+            }
+            else {
+                up = false;
+            }
+            if (Input.GetKeyDown(KeyCode.S)) {
+                down = true;
+                shooting = true;
+            }
+            else {
+                down = false;
+            }
+
+            gunAngle = whatAngle(up, down, left, right);
+
+            //as stated below a value of 500 is a flag, symbolising that everything is false
+            if (gunAngle == 500) {
+                shooting = false;
+
+            }
+            else {
+                //if the angles are not the flag value we call the shoot function and set the direction of the gun
+                gunRender.setGunDirection(gunAngle, true);
+                shoot(gunAngle);
+                
+            }
+        }
+
+    }
+
+  
+
+
+    public void shoot(float angle) {
+        gunRender.setGunDirection(angle, false);
+        clicked = true;
+    shootCount++;
+        
+        //convert our angle to a vector
+        var rad = Mathf.Deg2Rad * angle;
+    Vector2 vectAngle = new Vector2(Mathf.Cos(rad), Mathf.Sin(rad));
+    
+    //shoot a raycast in the direction we shot in to see if our bullet hit anything
+    RaycastHit2D hit = Physics2D.Raycast(rb2D.position,vectAngle);
+
+    //at this point we do the "special effects"
+    Effect(angle, vectAngle);
+
+    if (hit.collider != null) {
+
+    //Debug.Log(hit);
+    if (hit.collider.gameObject.tag == "Button") {
+
+        String nameHit = hit.collider.gameObject.name;
+        button = GameObject.Find(nameHit);
+        //Debug.Log(button);
+        ButtonHit boolchange = button.GetComponent<ButtonHit>();
+        boolchange.wasHit = !boolchange.wasHit;
+        // Destroy(bullet, 3.0f);
+
+    }
+
+    }
+    if (heatLevel < threshhold) {
+    heatLevel += overheatLevel;
+    rb2D.AddForce((-1 * vectAngle) * (int)(Force * (8 / heatLevel) * 1.5));
+    }
+    else
+    rb2D.AddForce(-1 * vectAngle * 12);
+        
+
+
+    Vector2 temp;
+    if (Math.Abs(rb2D.velocity.x) > maxSpeed && Math.Abs(rb2D.velocity.y) > maxSpeed) {
+    temp = new Vector2(rb2D.velocity.x * 0.85f, rb2D.velocity.y * 0.85f);
+    rb2D.velocity = temp;
+    }
+    else if (Math.Abs(rb2D.velocity.x) > maxSpeed) {
+    temp = new Vector2(rb2D.velocity.x * 0.85f, rb2D.velocity.y);
+    rb2D.velocity = temp;
+    }
+    else if (Math.Abs(rb2D.velocity.y) > maxSpeed) {
+        temp = new Vector2(rb2D.velocity.x, rb2D.velocity.y * 0.85f);
+        rb2D.velocity = temp;
+    }
+}
+
+    public void thrust(bool pauseState) {
+        bool up = false;
+        bool down = false;
+        bool left = false;
+        bool right = false;
+
+        float gunAngle;
+
+       
+        // they alre seperate if statements so diaganals can work
+        //the reason I apply force in each independent direction is so, for example the player can stop boosting diagonally to the right and only 
+        //boost tp the right. If I had waited to the end of the function and got the angle there I would not be able to do this.
+
+
+        if (!Input.GetKey(KeyCode.Space)) {
+
+
+            // if the key is just tapped instead of heald down we we want to shoot and not use the flame thrower
+
+            if (Input.GetKey(KeyCode.D) && isGrounded == true || Input.GetKey(KeyCode.D) && gh.isEnabled == true) {
+
+                right = true;
+                boosting = true;
+                rb2D.AddForce(new Vector2(-thrustForce, 0));
+            }
+            else {
+                right = false;
+            }
+            if (Input.GetKey(KeyCode.A) && isGrounded == true || Input.GetKey(KeyCode.A) && gh.isEnabled == true) {
+                left = true;
+                boosting = true;
+                rb2D.AddForce(new Vector2(thrustForce, 0));
+            }
+            else {
+                left = false;
+            }
+            if ((Input.GetKey(KeyCode.W) && isGrounded == true || Input.GetKey(KeyCode.W) && gh.isEnabled == true)) {
+                up = true;
+                boosting = true;
+                rb2D.AddForce(new Vector2(0, -thrustForce));
+            }
+            else {
+                up = false;
+            }
+            if ((Input.GetKey(KeyCode.S) && isGrounded == true || Input.GetKey(KeyCode.S) && gh.isEnabled == true)) {
+                down = true;
+                boosting = true;
+                rb2D.AddForce(new Vector2(0, thrustForce));
+            }
+            else {
+                down = false;
+            }
+
+            gunAngle = whatAngle(up, down, left, right);
+
+            //as stated below a value of 500 is a flag, symbolising that everything is false
+            if (gunAngle == 500) {
+                boosting = false;
+                gunRender.setGunDirection(false);
+            }
+            else {
+                gunRender.setGunDirection(gunAngle, true);
+            }
+        }
+        else {
+            boosting = false;
+        }
+    }
+      
+
+
+    float whatAngle(bool Up, bool Down, bool Left, bool Right) {
+        if (Up == true && !Left && !Right) {
+            return 90;
+        }
+        else if (Right == true && Up == false && Down == false) {
+            return 0;
+        }
+        else if (Down == true && Left == false && Right == false) {
+            return -90;
+        }
+        else if (Left == true && Up == false && Down == false) {
+            return 180;
+        }
+        else if (Left == true && Up == true && Down == false) {
+            return 135;
+        }
+        else if (Left == true && Down == true && Up == false) {
+            return 225;
+        }
+        else if (Right == true && Up == true && Down == false) {
+            return 45;
+        }
+        else if (Right == true && Down == true && Up == false)
+            return -45;
+        else {
+            //500 is a flag variable, this is to turn things off
+            return 500;
+
+        }
+    }
+
+    private void Effect(float angle, Vector2 direction){
+        //float angle = Mathf.Atan2(mousePosition.y, mousePosition.x) * Mathf.Rad2Deg;
+        //float angle = gunRender.gunAngle;
+
+        Quaternion rotation = Quaternion.Euler(new Vector3(0, 0, angle));
+
+        //have the bullet spawn at the position of the gun
+        Vector2 pos = new Vector2(gunRender.gunPosition.x + .8f, gunRender.gunPosition.y-.8f);
+
+        GameObject bullet = Instantiate(Gunbolt, pos, rotation);
+        Rigidbody2D bulletMove = bullet.GetComponent<Rigidbody2D>();
+        if (heatLevel < threshhold)
+        {
+            //cameraTransform.localPosition = cameraTransform.localPosition + UnityEngine.Random.insideUnitSphere * shakeAmount;
+            camMove.shakeCamera(shake, shakeTime);
+            heatLevel += overheatLevel;
+            bulletMove.AddForce((direction) * (int)(Force * (8 / heatLevel)*1000));
+        }
+        else
+            bulletMove.AddForce((direction) * (int)(Force * (8 / heatLevel) * 1000));
+
+
+        Destroy(bullet, 3.0f);
+
+
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision) {
+
+        if (collision.gameObject.tag == "Floor") {
+
+            isGrounded = true;
+        }
+    }
+
+    private void OnCollisionExit2D(Collision2D collision) {
+
+        if (collision.gameObject.tag == "Floor") {
+
+            isGrounded = false;
+        }
+    }
+
+    private void FixedUpdate() {
+        bool pauseState = GameObject.Find("Pause Menu").GetComponent<PauseMenu>().isPaused;
+        thrust(pauseState);
+        if (heatLevel > 1 && gh.isEnabled != true)
+        {
+            heatLevel -= 0.1;
+        }
+        if (heatLevel < 1)
+            heatLevel = 1;
+        if (isGrounded == true)
+        {
+            if (heatLevel > 1)
+            {
+                heatLevel =1;
+            }
+            if (heatLevel < 1)
+                heatLevel = 1;
+        }
+        speedX = rb2D.velocity.x;
+        speedY = rb2D.velocity.y;
+        if (speedX < 0)
+        {   
+            
+            directionX = -1;
+            //we're changing the direction of the player sprite
+            /*if(flip.flipX != true) {
+                GetComponent<SpriteRenderer>().flipX = true;
+            }*/
+        }
+        else if (speedX > 0)
+        {
+           /* if (flip.flipX != false) {
+                GetComponent<SpriteRenderer>().flipX = false;
+            }*/
+            directionX = 1;
+        }
+        else
+        {
+            directionX = 0;
+        }
+        if (speedY < 0)
+        {
+            directionY = -1;
+        }
+        else if (speedY > 0)
+        {
+            directionY = 1;
+        }
+        else
+        {
+            directionY = 0;
+        }
+
+       
+
+    }
+
+}
