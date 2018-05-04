@@ -16,12 +16,14 @@ public class Grappling_hook : MonoBehaviour {
     public Vector2 mousePosition = new Vector3();
     public bool didHit;
     public float ropeMaxShootDistance = 20f;
-    private List<Vector2> ropePositions = new List<Vector2>();
+
     public LineRenderer line;
     private Rigidbody2D anchorRB;
     private SpriteRenderer anchorSprite;
     private bool distanceSet;
     private int positions;
+    private Vector2 dynamicPoint;
+    Transform parent;
     
 
     // Use this for initialization
@@ -33,82 +35,60 @@ public class Grappling_hook : MonoBehaviour {
         anchorRB = anchor.GetComponent<Rigidbody2D>();
         anchorSprite = anchor.GetComponent<SpriteRenderer>();
         line.enabled = false;
+        
     }
 
-    //set rhe rope vertex positions
-    private void updateRopePositions() {
 
+    private void updateRope() {
         if (!didHit) {
             //the rope did not hit anything so stop here
             return;
         }
+        else if (hit.collider.tag != "moveingFloor") {
+            //if we dont expect the object to move we can just put the anchor on the sopt that was hit
+            anchor.transform.position = hit.point;
+        }
+        else {
+            if (parent != null) {
+                //at this point this puts the anchor in the center
+                var changeX = hit.collider.transform.position.x - parent.position.x;
+                var changeY = hit.collider.transform.position.y - parent.position.y;
+                anchor.transform.position = new Vector2((anchor.transform.position.x + changeX), (anchor.transform.position.y + changeY));
+                parent = anchor.transform;
+            }
+            else {
 
-        positions = ropePositions.Count + 1;
-
-        for (int i = positions - 1; i >= 0; i--) {
-            if (i != positions - 1) {
-
-
-                //configure the joint distance to the distance between the player and where they want to grapple to
-
-            if (i == ropePositions.Count - 1 || ropePositions.Count == 1) {
-                    //we move the anchor to where the player wants to grapple to
-                    Vector2 newPosition = ropePositions[ropePositions.Count - 1];
-                    if (ropePositions.Count == 1) {
-                        anchorRB.transform.position = newPosition;
-
-                        if (!distanceSet) {
-
-                            joint.distance = Vector2.Distance(transform.position, newPosition);
-                            distanceSet = true;
-                        }
-                        else {
-
-                            anchorRB.transform.position = newPosition;
-
-                            if (!distanceSet) {
-                                joint.distance = Vector2.Distance(transform.position, newPosition);
-                                distanceSet = true;
-                            }
-                        }
-                    }
-                    //the point at which the rope connects to the object 
-                    else if (i - 1 == ropePositions.IndexOf(ropePositions.Last())) {
-
-                        var lastPosition = ropePositions.Last();
-                        anchorRB.transform.position = lastPosition;
-                        if (!distanceSet) {
-
-                            joint.distance = Vector2.Distance(transform.position, lastPosition);
-                            distanceSet = true;
-                        }
-                    }
-
-                    }
-                }
+                anchor.transform.position = hit.point;
+                parent = hit.collider.transform;
             }
 
-
-
-
         }
-    
+
+        
+
+
+    }
+
 
     private void inputHandler(Vector2 aimDirection) {
+
         bool pauseState = GameObject.Find("Pause Menu").GetComponent<PauseMenu>().isPaused;
+
         if (Input.GetKeyDown(KeyCode.Space)){
 
-            if (didHit) return;
+            if (didHit){
+
+                return;
+            }
             //sends out our raycast with our specified range for the grappling hook
-            var hit = Physics2D.Raycast(playerPosition, aimDirection, ropeMaxShootDistance, canColide);
+            hit = Physics2D.Raycast(playerPosition, aimDirection, ropeMaxShootDistance, canColide);
 
             if (hit.collider != null) {
 
-                didHit = true;
+                if (hit.collider.gameObject.GetComponent<Rigidbody2D>() != null) {
 
-                if (!ropePositions.Contains(hit.point)){
-
-                    ropePositions.Add(hit.point);
+                    didHit = true;
+                    //ropePositions.Add(hit.point);
                     //turn on our distance joint
                     joint.distance = Vector2.Distance(playerPosition, hit.point);
                     joint.enabled = true;
@@ -118,7 +98,7 @@ public class Grappling_hook : MonoBehaviour {
 
                 }
                 else {
-                    //we did not hit turn everything off
+                    //we did not hit anything we wanted to hit, so turn everything off
                     didHit = false;
                     joint.enabled = false;
                     isEnabled = false;
@@ -140,8 +120,10 @@ public class Grappling_hook : MonoBehaviour {
         didHit = false;
         //playerMovement.isSwinging = false; probably do not need this
         isEnabled = false;
-        ropePositions.Clear();
         anchorSprite.enabled = false;
+        joint.connectedAnchor = new Vector2(0, 0);
+
+
     }
 
     // Update is called once per frame
@@ -167,22 +149,10 @@ public class Grappling_hook : MonoBehaviour {
         var aimDirection = Quaternion.Euler(0, 0, aimAngle * Mathf.Rad2Deg) * Vector2.right;
 
 
-        //do a raycast to the object we want to see if we can connect to
-        //hit = Physics2D.Raycast(transform.position, mouseDir, distance, canColide);
 
-        /*if (hit.collider != null && hit.collider.gameObject.GetComponent<Rigidbody2D>() != null) {
-            didHit = true;
-            joint.enabled = true;
-            joint.connectedBody = hit.collider.gameObject.GetComponent<Rigidbody2D>();
-            //make the joint where the ray cast hit
-            joint.connectedAnchor = hit.point - new Vector2(hit.collider.transform.position.x, hit.collider.transform.position.y);
-            //get distance between player and the thing that they hooked on to
-            joint.distance = Vector2.Distance(transform.position, hit.point);
-
-        }*/
 
         inputHandler(aimDirection);
-        updateRopePositions();
+        updateRope();
 
 
     }
