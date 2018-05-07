@@ -19,7 +19,7 @@ public class gunRenderBehavior : MonoBehaviour {
 
 
     // Use this for initialization
-    void Start () {
+    void Start() {
         cl = player.GetComponent<PlayerMove>();
         anim = GetComponent<Animator>();
         playerTransform = player.GetComponent<Transform>();
@@ -29,12 +29,18 @@ public class gunRenderBehavior : MonoBehaviour {
         Cam = Camera.main;
     }
 
+
+    public void shootAnimationController( bool shooting, bool boosting) {
+        anim.SetBool("shooting", shooting);
+        anim.SetBool("boosting", boosting);
+    }
+
     private void FixedUpdate() {
 
 
         boosting = cl.boosting;
         anim.SetBool("boosting", boosting);
-
+        
         mousePosition = Cam.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, 0));
         gunPosition = gun.position;
         mouseDir.x = mousePosition.x - gunPosition.x;
@@ -43,19 +49,19 @@ public class gunRenderBehavior : MonoBehaviour {
             playerFlip.flipX = true;
             flipGun.flipY = true;
         }
-        else if (mousePosition.x > playerTransform.position.x && (playerTransform.rotation.z * Mathf.Rad2Deg) < 40){
+        else if (mousePosition.x > playerTransform.position.x && (playerTransform.rotation.z * Mathf.Rad2Deg) < 40) {
             playerFlip.flipX = false;
             flipGun.flipY = false;
         }
-       /* else if ((playerTransform.rotation.z * Mathf.Rad2Deg) >= 40 && mousePosition.y > playerTransform.position.y && mousePosition.x < playerTransform.position.x) {
-            
-            playerFlip.flipX = false;
-            flipGun.flipY = false;
-        }
-        else if ((playerTransform.rotation.z * Mathf.Rad2Deg) >= 40 && mousePosition.y < playerTransform.position.y && mousePosition.x > playerTransform.position.x) {
-            playerFlip.flipX = true;
-            flipGun.flipY = true;
-        }*/
+        /* else if ((playerTransform.rotation.z * Mathf.Rad2Deg) >= 40 && mousePosition.y > playerTransform.position.y && mousePosition.x < playerTransform.position.x) {
+
+             playerFlip.flipX = false;
+             flipGun.flipY = false;
+         }
+         else if ((playerTransform.rotation.z * Mathf.Rad2Deg) >= 40 && mousePosition.y < playerTransform.position.y && mousePosition.x > playerTransform.position.x) {
+             playerFlip.flipX = true;
+             flipGun.flipY = true;
+         }*/
 
 
         gunAngle = Mathf.Atan2(mouseDir.y, mouseDir.x) * Mathf.Rad2Deg; //getting the angle and turning it from radians to degrees

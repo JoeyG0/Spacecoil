@@ -2,85 +2,43 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Grappling_hook : MonoBehaviour {
+public class pringHook : MonoBehaviour {
 
     Camera Cam;
     public bool isEnabled = false;
     RaycastHit2D hit;
     public GameObject anchor;
     public LayerMask canColide;
-    DistanceJoint2D joint;
+    SpringJoint2D joint;
     public Vector2 playerPosition = new Vector2();
     public Vector2 mouseDir = new Vector2();
     public Vector2 mousePosition = new Vector3();
     public bool didHit;
     public float ropeMaxShootDistance = 20f;
+
     public LineRenderer line;
-
-
-    PlayerMove pl;
     private Rigidbody2D anchorRB;
     private SpriteRenderer anchorSprite;
     private bool distanceSet;
     private int positions;
     private Vector2 dynamicPoint;
-    Transform variablePosition;
-    
+    Transform parent;
+
 
     // Use this for initialization
-    void Start () {
-        pl = GetComponent<PlayerMove>();
+    void Start() {
         line = anchor.GetComponent<LineRenderer>();
         Cam = Camera.main;
-        joint = GetComponent<DistanceJoint2D>();
+        joint = GetComponent<SpringJoint2D>();
         joint.enabled = false;
         anchorRB = anchor.GetComponent<Rigidbody2D>();
         anchorSprite = anchor.GetComponent<SpriteRenderer>();
         line.enabled = false;
-        
+
     }
 
-
-    private void handleMoveingObject() {
-
-        if (variablePosition != null) {
-
-            //at this point this puts the anchor in the center
-            var changeX = hit.collider.transform.position.x - variablePosition.position.x;
-            var changeY = hit.collider.transform.position.y - variablePosition.position.y;
-            var distPlayerAnchor = Vector2.Distance(GetComponent<Transform>().position, anchor.transform.position);
-            //get the normilised direction of the moving object
-            var dir = hit.collider.transform.position - GetComponent<Transform>().position;
-            dir = dir.normalized;
-
-            anchor.transform.position = new Vector2((anchor.transform.position.x + changeX), (anchor.transform.position.y + changeY));
-
-            if (distPlayerAnchor > joint.distance) {
-                if (pl.boosting == true) {
-                    anchorRB.AddForce(pl.mouseDir * 2 *pl.thrustForce);
-                }
-                if (hit.collider.GetComponent<MoveLeftAndRight>() != null) {
-                    //apply a force on the player in the direction of the object
-                    GetComponent<Rigidbody2D>().AddForce(dir * (hit.collider.GetComponent<MoveLeftAndRight>().speed));
-                }
-                if (hit.collider.GetComponent<moveUpAndDown>() != null) {
-                    //apply a force on the player in the direction of the object
-                    GetComponent<Rigidbody2D>().AddForce(dir * (hit.collider.GetComponent<moveUpAndDown>().speed));
-                }
-            }
-
-            variablePosition = anchor.transform;
-            //joint.distance = Vector2.Distance(playerPosition, anchor.transform.position);
-        }
-        else {
-
-            anchor.transform.position = hit.point;
-            variablePosition = hit.collider.transform;
-        }
-    }
 
     private void updateRope() {
-
         if (!didHit) {
             //the rope did not hit anything so stop here
             return;
@@ -90,10 +48,33 @@ public class Grappling_hook : MonoBehaviour {
             anchor.transform.position = hit.point;
         }
         else {
-            handleMoveingObject();
+            if (parent != null) {
+
+                if (hit.collider.GetComponent<MoveLeftAndRight>() != null) {
+                    if (hit.collider.GetComponent<MoveLeftAndRight>().goingLeft) {
+                        GetComponent<Rigidbody2D>().AddForce(new Vector2((-1 * (hit.collider.GetComponent<MoveLeftAndRight>().speed * Time.deltaTime)), 0));
+                    }
+                    else {
+                        GetComponent<Rigidbody2D>().AddForce(new Vector2((hit.collider.GetComponent<MoveLeftAndRight>().speed * Time.deltaTime), 0));
+                    }
+                }
+
+                //at this point this puts the anchor in the center
+                var changeX = hit.collider.transform.position.x - parent.position.x;
+                var changeY = hit.collider.transform.position.y - parent.position.y;
+                anchor.transform.position = new Vector2((anchor.transform.position.x + changeX), (anchor.transform.position.y + changeY));
+                parent = anchor.transform;
+                //joint.distance = Vector2.Distance(playerPosition, anchor.transform.position);
+            }
+            else {
+
+                anchor.transform.position = hit.point;
+                parent = hit.collider.transform;
+            }
+
         }
 
-        
+
 
 
     }
@@ -103,9 +84,9 @@ public class Grappling_hook : MonoBehaviour {
 
         bool pauseState = GameObject.Find("Pause Menu").GetComponent<PauseMenu>().isPaused;
 
-        if (Input.GetKeyDown(KeyCode.Space)){
+        if (Input.GetKeyDown(KeyCode.Space)) {
 
-            if (didHit){
+            if (didHit) {
 
                 return;
             }
@@ -156,7 +137,7 @@ public class Grappling_hook : MonoBehaviour {
     }
 
     // Update is called once per frame
-    void Update () {
+    void Update() {
         if (line.enabled == true) {
 
             line.SetPosition(0, transform.position);
@@ -174,7 +155,7 @@ public class Grappling_hook : MonoBehaviour {
         if (aimAngle < 0f) {
             aimAngle = Mathf.PI * 2 + aimAngle;
         }
-            
+
         var aimDirection = Quaternion.Euler(0, 0, aimAngle * Mathf.Rad2Deg) * Vector2.right;
 
 
@@ -186,3 +167,4 @@ public class Grappling_hook : MonoBehaviour {
 
     }
 }
+

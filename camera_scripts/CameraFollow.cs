@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class CameraFollow : MonoBehaviour {
-    public GameObject player;
+    GameObject player;
     private PlayerMove cl;
     private Vector3 lastPosition;
     private float shakeTimer = 0f;
@@ -21,6 +21,7 @@ public class CameraFollow : MonoBehaviour {
     }
     private Vector3 offset;
     void Start() {
+        player = GameObject.Find("player");
         cl = GameObject.Find("player").GetComponent<PlayerMove>();
     }
 
@@ -41,11 +42,18 @@ public class CameraFollow : MonoBehaviour {
             transform.position = new Vector3(transform.position.x + shakePosition.x, transform.position.y + shakePosition.y, transform.position.z);
         }
         //so the camera does not get stuck on walls
-        if (player.transform.position != lastPosition) {
-            transform.Translate(Vector3.right * Time.deltaTime * speedX);
-            transform.Translate(Vector3.up * Time.deltaTime * speedY);
+        if (player.transform.position != lastPosition && player.transform.parent == null) {
+            // transform.Translate(Vector3.right * Time.deltaTime * speedX);
+            // transform.Translate(Vector3.up * Time.deltaTime * speedY);
+            GetComponent<Transform>().parent = player.transform;
+        }
+        else {
+            GetComponent<Transform>().parent = player.transform.parent.transform;
         }
         
-        lastPosition = player.transform.position;
+
+        
+        
+        //lastPosition = player.transform.position;
     }
 }

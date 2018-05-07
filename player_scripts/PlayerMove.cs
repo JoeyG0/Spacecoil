@@ -22,9 +22,6 @@ public class PlayerMove : MonoBehaviour {
     bool overheat = false;
     public bool clicked = false;
     public int shootCount = 0;
-    /// <summary>
-    /// above added by Joey
-    /// </summary>
     public float Force = 1200.0f;
     public float maxSpeed = 50.0f;
     public Vector2 mousePosition = new Vector2();
