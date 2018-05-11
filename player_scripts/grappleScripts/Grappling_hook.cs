@@ -16,7 +16,8 @@ public class Grappling_hook : MonoBehaviour {
     public bool didHit;
     public float ropeMaxShootDistance = 20f;
     public LineRenderer line;
-
+    RaycastHit2D canGrapple;
+    SpringJoint2D spring;
 
     PlayerMove pl;
     private Rigidbody2D anchorRB;
@@ -25,10 +26,16 @@ public class Grappling_hook : MonoBehaviour {
     private int positions;
     private Vector2 dynamicPoint;
     Transform variablePosition;
-    
+    Transform playerTransform;
+    CustomCursor cc;
+    bool letGoOfMovingObject = false;
+    Vector3 velocityOfGrappleX;
+    Vector3 velocityOfGrappleY;
 
     // Use this for initialization
     void Start () {
+
+        playerTransform = GameObject.Find("player").GetComponent<Transform>();
         pl = GetComponent<PlayerMove>();
         line = anchor.GetComponent<LineRenderer>();
         Cam = Camera.main;
@@ -37,45 +44,18 @@ public class Grappling_hook : MonoBehaviour {
         anchorRB = anchor.GetComponent<Rigidbody2D>();
         anchorSprite = anchor.GetComponent<SpriteRenderer>();
         line.enabled = false;
-        
+        cc = Cam.GetComponent<CustomCursor>();
+
     }
 
 
-    private void handleMoveingObject() {
+    private void handleMovingObject() {
 
-        if (variablePosition != null) {
-
-            //at this point this puts the anchor in the center
-            var changeX = hit.collider.transform.position.x - variablePosition.position.x;
-            var changeY = hit.collider.transform.position.y - variablePosition.position.y;
-            var distPlayerAnchor = Vector2.Distance(GetComponent<Transform>().position, anchor.transform.position);
-            //get the normilised direction of the moving object
-            var dir = hit.collider.transform.position - GetComponent<Transform>().position;
-            dir = dir.normalized;
-
-            anchor.transform.position = new Vector2((anchor.transform.position.x + changeX), (anchor.transform.position.y + changeY));
-
-            if (distPlayerAnchor > joint.distance) {
-                if (pl.boosting == true) {
-                    anchorRB.AddForce(pl.mouseDir * 2 *pl.thrustForce);
-                }
-                if (hit.collider.GetComponent<MoveLeftAndRight>() != null) {
-                    //apply a force on the player in the direction of the object
-                    GetComponent<Rigidbody2D>().AddForce(dir * (hit.collider.GetComponent<MoveLeftAndRight>().speed));
-                }
-                if (hit.collider.GetComponent<moveUpAndDown>() != null) {
-                    //apply a force on the player in the direction of the object
-                    GetComponent<Rigidbody2D>().AddForce(dir * (hit.collider.GetComponent<moveUpAndDown>().speed));
-                }
-            }
-
-            variablePosition = anchor.transform;
-            //joint.distance = Vector2.Distance(playerPosition, anchor.transform.position);
-        }
-        else {
-
+        if (variablePosition == null) {
             anchor.transform.position = hit.point;
+            anchor.transform.SetParent(hit.collider.transform);
             variablePosition = hit.collider.transform;
+            letGoOfMovingObject = true;
         }
     }
 
@@ -85,12 +65,18 @@ public class Grappling_hook : MonoBehaviour {
             //the rope did not hit anything so stop here
             return;
         }
-        else if (hit.collider.tag != "moveingFloor") {
+        else if (hit.collider.tag != "movingFloor") {
             //if we dont expect the object to move we can just put the anchor on the sopt that was hit
             anchor.transform.position = hit.point;
         }
         else {
-            handleMoveingObject();
+            if( hit.collider.GetComponent<MoveLeftAndRight>() != null) {
+                velocityOfGrappleX = hit.collider.GetComponent<MoveLeftAndRight>().currentVelocity;
+            }
+            if (hit.collider.GetComponent<moveUpAndDown>()!= null) {
+                velocityOfGrappleY = hit.collider.GetComponent<moveUpAndDown>().currentVelocity;
+            }
+            handleMovingObject();
         }
 
         
@@ -117,7 +103,6 @@ public class Grappling_hook : MonoBehaviour {
                 if (hit.collider.gameObject.GetComponent<Rigidbody2D>() != null) {
 
                     didHit = true;
-                    //ropePositions.Add(hit.point);
                     //turn on our distance joint
                     joint.distance = Vector2.Distance(playerPosition, hit.point);
                     joint.enabled = true;
@@ -146,11 +131,21 @@ public class Grappling_hook : MonoBehaviour {
 
         joint.enabled = false;
         line.enabled = false;
+        variablePosition = null;
         didHit = false;
-        //playerMovement.isSwinging = false; probably do not need this
         isEnabled = false;
         anchorSprite.enabled = false;
         joint.connectedAnchor = new Vector2(0, 0);
+        anchor.transform.SetParent(playerTransform);
+
+        if (letGoOfMovingObject) {
+            Vector3 letGoVelocity = new Vector3(velocityOfGrappleX.x, velocityOfGrappleY.y, 0);
+            GetComponent<Rigidbody2D>().velocity = letGoVelocity;
+
+            letGoOfMovingObject = false;
+            //velocityOfGrapple = new Vector3 (0,0,0);
+        }
+
 
 
     }
@@ -162,6 +157,9 @@ public class Grappling_hook : MonoBehaviour {
             line.SetPosition(0, transform.position);
             line.SetPosition(1, anchor.transform.position);
         }
+
+        //we don't want to have to call the SetCustomCursor every frame, so before wecheck the valwith the previous frame to see wif we need to call it
+        bool previosFrameCanGrapple = cc.canGrapple;
 
         mousePosition = Cam.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, 0));
 
@@ -177,8 +175,23 @@ public class Grappling_hook : MonoBehaviour {
             
         var aimDirection = Quaternion.Euler(0, 0, aimAngle * Mathf.Rad2Deg) * Vector2.right;
 
+        //send out a raycast every frame to see if we need to change the cursor
+        canGrapple = Physics2D.Raycast(playerPosition, aimDirection, ropeMaxShootDistance, canColide);
 
+        if (canGrapple.collider != null) {
 
+            if (canGrapple.collider.gameObject.GetComponent<Rigidbody2D>() != null && !previosFrameCanGrapple) {
+                cc.canGrapple = true;
+                cc.SetCustomCursor();
+            }
+        }
+   
+        else if (canGrapple.collider == null && previosFrameCanGrapple) {                            
+            cc.canGrapple = false; 
+            cc.SetCustomCursor();            
+        }
+        
+        
 
         inputHandler(aimDirection);
         updateRope();

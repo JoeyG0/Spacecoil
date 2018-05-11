@@ -58,11 +58,10 @@ public class ScrollY : MonoBehaviour {
         transform.position += Vector3.right * (deltaY * paralaxSpeed);
         lastCameraY = cameraTransform.position.y;
         if (cameraTransform.position.y < (layers[bottomIndex].transform.position.y) - veiwZone) {
-            Debug.Log("1");
+
             scrollDown();
         }
         if (cameraTransform.position.y > (layers[topIndex].transform.position.y)) {
-            Debug.Log("2");
             scrollUp();
         }
     }

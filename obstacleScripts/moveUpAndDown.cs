@@ -11,6 +11,14 @@ public class moveUpAndDown : MonoBehaviour {
     public bool hitUp = false;
     //start off going up
     public bool hitDown = true;
+    public Vector3 currentVelocity {
+        get {
+            return _currentVelocity;
+        }
+    }
+    private Vector3 _currentVelocity;
+    private Vector3 lastPos;
+
 
     private void OnTriggerEnter2D(Collider2D collision) {
 
@@ -27,7 +35,17 @@ public class moveUpAndDown : MonoBehaviour {
             wait = true;
         }
     }
+   /* private void OnCollisionEnter2D(Collision2D collision) {
+        if(collision.gameObject.name == "player") {
+            collision.transform.parent = gameObject.transform;
+        }
+       // collision.transform.parent = gameObject.transform;
 
+    }
+    private void OnCollisionExit2D(Collision2D collision) {
+        collision.transform.parent = null;
+
+    }*/
     private void Update() {
 
         //go left untill we hit the bounds
@@ -40,6 +58,9 @@ public class moveUpAndDown : MonoBehaviour {
         else {
             StartCoroutine("waitXSeconds");
         }
+
+        _currentVelocity = (transform.position - lastPos) / Time.deltaTime;
+        lastPos = transform.position;
     }
 
     //waits the ammount of seconds specified

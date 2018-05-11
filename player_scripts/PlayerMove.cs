@@ -157,7 +157,6 @@ public class PlayerMove : MonoBehaviour {
         if (collision.gameObject.tag == "Floor" || collision.gameObject.tag == "moveingFloor") {
 
             isGrounded = true;
-            Debug.Log(collision.gameObject.name);
         }
     }
 
