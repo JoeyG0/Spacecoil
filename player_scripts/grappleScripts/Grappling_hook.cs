@@ -29,8 +29,8 @@ public class Grappling_hook : MonoBehaviour {
     Transform playerTransform;
     CustomCursor cc;
     bool letGoOfMovingObject = false;
-    Vector3 velocityOfGrappleX;
-    Vector3 velocityOfGrappleY;
+    Vector3 velocityOfGrappleX = new Vector3(0, 0, 0);
+    Vector3 velocityOfGrappleY = new Vector3(0, 0, 0);
 
     // Use this for initialization
     void Start () {
@@ -139,11 +139,24 @@ public class Grappling_hook : MonoBehaviour {
         anchor.transform.SetParent(playerTransform);
 
         if (letGoOfMovingObject) {
-            Vector3 letGoVelocity = new Vector3(velocityOfGrappleX.x, velocityOfGrappleY.y, 0);
-            GetComponent<Rigidbody2D>().velocity = letGoVelocity;
+
+            Vector3 previousPlayerVelocity = GetComponent<Rigidbody2D>().velocity;
+
+            Vector3 compare = new Vector3(0, 0, 0);
+            if (velocityOfGrappleX != compare && velocityOfGrappleY != compare) {
+                Vector3 letGoVelocity = new Vector3(velocityOfGrappleX.x, velocityOfGrappleY.y, 0);
+                GetComponent<Rigidbody2D>().velocity = previousPlayerVelocity + letGoVelocity;
+            }
+            else if (velocityOfGrappleX == compare && velocityOfGrappleY != compare) {
+                GetComponent<Rigidbody2D>().velocity = previousPlayerVelocity + velocityOfGrappleY;
+            }
+            else {
+                GetComponent<Rigidbody2D>().velocity = previousPlayerVelocity + velocityOfGrappleX;
+            }
 
             letGoOfMovingObject = false;
-            //velocityOfGrapple = new Vector3 (0,0,0);
+            velocityOfGrappleX = new Vector3(0, 0, 0);
+            velocityOfGrappleY = new Vector3(0, 0, 0);
         }
 
 
