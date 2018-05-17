@@ -17,6 +17,7 @@ public class PlayerPropertyManeger : MonoBehaviour {
     public static float time;
     public bool grounded;
     public bool boosting;
+    private GameObject player;
 
 
     Animator anim;
@@ -24,15 +25,16 @@ public class PlayerPropertyManeger : MonoBehaviour {
 
     void Start () {
 
-        cl = GameObject.Find("player").GetComponent<PlayerMove>();
-        anim = GameObject.Find("player").GetComponent<Animator>();
-        tb = GameObject.Find("player").GetComponent<TriggerBehaviors>();
+        player = GameObject.Find("player");
+        cl = player.GetComponent<PlayerMove>();
+        anim = player.GetComponent<Animator>();
+        tb = player.GetComponent<TriggerBehaviors>();
 	}
 	
 	// Update is called once per frame
 	void Update () {
 
-        position = cl.playerPosition;
+        position = player.transform.position;
         isGrounded = cl.isGrounded;
         deathCount = TriggerBehaviors.deathCount;
         shootCount = cl.shootCount;

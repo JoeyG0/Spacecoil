@@ -43,9 +43,9 @@ public class CameraFollow : MonoBehaviour {
         }
         //so the camera does not get stuck on walls
         if (player.transform.position != lastPosition && player.transform.parent == null) {
-            // transform.Translate(Vector3.right * Time.deltaTime * speedX);
-            // transform.Translate(Vector3.up * Time.deltaTime * speedY);
-            GetComponent<Transform>().parent = player.transform;
+             transform.Translate(Vector3.right * Time.deltaTime * speedX);
+             transform.Translate(Vector3.up * Time.deltaTime * speedY);
+           // GetComponent<Transform>().parent = player.transform;
         }
         else {
             GetComponent<Transform>().parent = player.transform.parent.transform;

@@ -11,14 +11,20 @@ public class moveWithPlatform : MonoBehaviour {
         distanceToGround = GetComponent<BoxCollider2D>().bounds.extents.y;
 	}
 
-    private void FixedUpdate() {
+    private void Update() {
 
         hit = Physics2D.Raycast(transform.position, -Vector3.up, distanceToGround );
+        Vector3 previousPlayerVelocity = GetComponent<Rigidbody2D>().velocity;
 
         if (hit.collider != null) {
             hit1 = true;
             if (hit.collider.GetComponent<moveUpAndDown>() != null) {
-                GetComponent<Rigidbody2D>().AddForce( new Vector2( 0, hit.collider.GetComponent<moveUpAndDown>().currentVelocity.y));
+                GetComponent<Rigidbody2D>().AddForce(hit.collider.GetComponent<moveUpAndDown>().currentVelocity);
+                //GetComponent<Rigidbody2D>().AddForce( new Vector2( 0, hit.collider.GetComponent<moveUpAndDown>().currentVelocity.y));
+            }
+            if (hit.collider.GetComponent<MoveLeftAndRight>() != null) {
+
+                GetComponent<Rigidbody2D>().AddForce(new Vector2(0, hit.collider.GetComponent<MoveLeftAndRight>().currentVelocity.x));
             }
         }
         else {

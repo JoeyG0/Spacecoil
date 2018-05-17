@@ -18,6 +18,8 @@ public class Grappling_hook : MonoBehaviour {
     public LineRenderer line;
     RaycastHit2D canGrapple;
     SpringJoint2D spring;
+    Vector3 anchorScale;
+
 
     PlayerMove pl;
     private Rigidbody2D anchorRB;
@@ -45,13 +47,13 @@ public class Grappling_hook : MonoBehaviour {
         anchorSprite = anchor.GetComponent<SpriteRenderer>();
         line.enabled = false;
         cc = Cam.GetComponent<CustomCursor>();
-
     }
 
 
     private void handleMovingObject() {
 
         if (variablePosition == null) {
+
             anchor.transform.position = hit.point;
             anchor.transform.SetParent(hit.collider.transform);
             variablePosition = hit.collider.transform;
@@ -68,6 +70,11 @@ public class Grappling_hook : MonoBehaviour {
         else if (hit.collider.tag != "movingFloor") {
             //if we dont expect the object to move we can just put the anchor on the sopt that was hit
             anchor.transform.position = hit.point;
+            if (line.enabled == true) {
+
+                line.SetPosition(0, transform.position);
+                line.SetPosition(1, anchor.transform.position);
+            }
         }
         else {
             if( hit.collider.GetComponent<MoveLeftAndRight>() != null) {
@@ -77,6 +84,11 @@ public class Grappling_hook : MonoBehaviour {
                 velocityOfGrappleY = hit.collider.GetComponent<moveUpAndDown>().currentVelocity;
             }
             handleMovingObject();
+            if (line.enabled == true) {
+
+                line.SetPosition(0, transform.position);
+                line.SetPosition(1, anchor.transform.position);
+            }
         }
 
         
@@ -109,6 +121,8 @@ public class Grappling_hook : MonoBehaviour {
                     anchorSprite.enabled = true;
                     isEnabled = true;
                     line.enabled = true;
+                    //force the line render to appear infront of everything
+                    line.sortingOrder = 1;
 
                 }
                 else {
@@ -136,7 +150,7 @@ public class Grappling_hook : MonoBehaviour {
         isEnabled = false;
         anchorSprite.enabled = false;
         joint.connectedAnchor = new Vector2(0, 0);
-        anchor.transform.SetParent(playerTransform);
+        //anchor.transform.SetParent(playerTransform);
 
         if (letGoOfMovingObject) {
 
@@ -161,15 +175,18 @@ public class Grappling_hook : MonoBehaviour {
 
 
 
+
     }
 
     // Update is called once per frame
     void Update () {
-        if (line.enabled == true) {
+
+
+       /* if (line.enabled == true) {
 
             line.SetPosition(0, transform.position);
             line.SetPosition(1, anchor.transform.position);
-        }
+        }*/
 
         //we don't want to have to call the SetCustomCursor every frame, so before wecheck the valwith the previous frame to see wif we need to call it
         bool previosFrameCanGrapple = cc.canGrapple;

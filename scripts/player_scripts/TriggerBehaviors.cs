@@ -14,6 +14,7 @@ public class TriggerBehaviors : MonoBehaviour
     Grappling_hook hook;
     public static int deathCount;
     public static float time;
+    Rigidbody2D rb2d;
    // public bool reverse = true;
     
     //public GameObject bounce;
@@ -23,6 +24,7 @@ public class TriggerBehaviors : MonoBehaviour
     void Start()
     {
 
+        rb2d = GameObject.Find("player").GetComponent<Rigidbody2D>();
         hook = GetComponent<Grappling_hook>();
         //anim = bounce.GetComponent<Animator>();
         playerCollider = GetComponent<BoxCollider2D>();
@@ -50,11 +52,11 @@ public class TriggerBehaviors : MonoBehaviour
         }
         if (collision.gameObject.tag == "Slow")
         {
-            cl.rb2D.velocity = new Vector2(cl.rb2D.velocity.x, cl.rb2D.velocity.y) * slowDown;
+            rb2d.velocity = new Vector2(rb2d.velocity.x, rb2d.velocity.y) * slowDown;
         }
         if (collision.gameObject.tag == "Speed")
         {
-            cl.rb2D.velocity = new Vector2(cl.rb2D.velocity.x, cl.rb2D.velocity.y) * speedUp;
+            rb2d.velocity = new Vector2(rb2d.velocity.x, rb2d.velocity.y) * speedUp;
         }
         if (collision.gameObject.tag == "Death")
         {
@@ -65,7 +67,7 @@ public class TriggerBehaviors : MonoBehaviour
         }
         if (collision.gameObject.tag == "QuickStop")
         {
-            cl.rb2D.velocity = new Vector2(0, 0);
+            rb2d.velocity = new Vector2(0, 0);
         }
         if (collision.gameObject.tag == "Finish")
         {
@@ -78,14 +80,14 @@ public class TriggerBehaviors : MonoBehaviour
         {
             //Debug.Log();
             //Vector2 temp = new Vector2(cl.rb2D.velocity.x*-1,cl.rb2D.velocity.y*-1);
-           // reverse = true;
-            cl.rb2D.gravityScale = -17;
+            // reverse = true;
+            rb2d.gravityScale = -17;
         }
         if (collision.gameObject.tag == "Fall")
         {
             //Debug.Log();
             //Vector2 temp = new Vector2(cl.rb2D.velocity.x*-1,cl.rb2D.velocity.y*-1);
-            cl.rb2D.gravityScale = 17;
+            rb2d.gravityScale = 17;
         }
 
 
@@ -99,10 +101,8 @@ public class TriggerBehaviors : MonoBehaviour
         }
         if (collision.gameObject.tag == "Reverse")
         {
-            //reverse = false;
-            //Debug.Log();
-            //Vector2 temp = new Vector2(cl.rb2D.velocity.x*-1,cl.rb2D.velocity.y*-1);
-            cl.rb2D.gravityScale = 17;
+
+            rb2d.gravityScale = 17;
         }
 
        // if (collision.gameObject.tag == "platform") {
@@ -115,13 +115,13 @@ public class TriggerBehaviors : MonoBehaviour
         {
             //Debug.Log();
             //Vector2 temp = new Vector2(cl.rb2D.velocity.x*-1,cl.rb2D.velocity.y*-1);
-            cl.rb2D.gravityScale = 17;
+            rb2d.gravityScale = 17;
         }
         if (collision.gameObject.tag == "Reverse")
         {
             //Debug.Log();
             //Vector2 temp = new Vector2(cl.rb2D.velocity.x*-1,cl.rb2D.velocity.y*-1);
-            cl.rb2D.gravityScale = -17;
+            rb2d.gravityScale = -17;
         }
     }
 
