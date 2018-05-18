@@ -15,6 +15,7 @@ public class DestroyBullet : MonoBehaviour {
         gameObject.SetActive(false);
     }
 
+
     private void OnDisable() {
         CancelInvoke();
     }

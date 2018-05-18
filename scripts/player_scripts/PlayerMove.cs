@@ -101,7 +101,7 @@ public class PlayerMove : MonoBehaviour {
 
             Effect();
 
-
+            
 
             //overheating code
             if (heatLevel < threshhold) {
@@ -111,7 +111,7 @@ public class PlayerMove : MonoBehaviour {
 
             }
             else {
-                rb2D.AddForce(-1 * mouseDir * 12);
+              rb2D.AddForce(-1 * mouseDir * 12);
             }
 
 
@@ -139,10 +139,9 @@ public class PlayerMove : MonoBehaviour {
                 canShoot = false;
             }
         }
-
         else {
-            //goes into the subroutine, to wait the specified amount of seconds before we can shoot again
-            waitXSeconds();
+            //goes into the Coroutine, to wait the specified amount of seconds before we can shoot again
+            StartCoroutine("waitXSeconds");
         }
 
     }
